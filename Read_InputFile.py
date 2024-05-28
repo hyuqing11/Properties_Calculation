@@ -72,7 +72,7 @@ class Read_InputFile:
         elif property_type ==6:
             #return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'start_steps','end_steps','time_index']
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'steps_read', 'initial_read',
-                    'time_index']
+                    'time_index','minimum_length']
 
         # Add other property types and their required parameters here
 
