@@ -1,6 +1,6 @@
 # Material Properties Calculation
 
-This repository contains code for calculating various material properties using molecular dynamics simulations. Currently, the following calculations are supported:
+This repository contains code for calculating various material properties using data obtained from molecular dynamics simulations (LAMMPS). Currently, the following calculations are supported:
 
 1. **Plot String in OVITO (property_type = 6):**
    This option allows you to visualize the string configuration using OVITO software.
