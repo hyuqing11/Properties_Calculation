@@ -69,8 +69,7 @@ class Read_InputFile:
                     'output_filename', 'compute_type']
         elif property_type == 4:
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'compute_type', 'start_steps','cutoff_distance','rDel']
-        elif property_type ==6:
-            #return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'start_steps','end_steps','time_index']
+        elif property_type == 6:
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'steps_read', 'initial_read',
                     'time_index','minimum_length']
 
