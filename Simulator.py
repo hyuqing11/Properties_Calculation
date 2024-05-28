@@ -47,7 +47,6 @@ class Simulator:
             van_hov_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
                                                    self.latt_matrix)
             Gr_mean, shells, r = van_hov_cal.calculate_van_hove_function(self.parameters)
-
             sz_time = np.size(self.parameters['time_series'])
             for i in range(sz_time):
                 output_filename = f'atom_Gs_{j}_{self.parameters["time_series"][i]}.txt'
@@ -56,30 +55,27 @@ class Simulator:
 
     def _compute_vacf_and_pdos(self):
         print('Compute VACF and Pdos')
-        nu = self.parameters['omega'] / (2 * np.pi)
+        omega = np.arange(0, self.parameters['max_omega'], self.parameters['d_omega'])
+        nu = omega / (2 * np.pi)
         dt = self.parameters['dt']
         t = np.arange(self.parameters['Nc']) * dt
 
         for j in self.parameters['compute_type']:
             if j == self.parameters['compute_type'] + 1:
                 pdos_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters, self.latt)
+                vacf_non, vacf_output, pdos = pdos_cal.pdos(omega)
             else:
                 pdos_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
                                                     self.latt)
-
-            vacf_non, vacf_output, pdos = pdos_cal.pdos()
-
+                vacf_non, vacf_output, pdos = pdos_cal.pdos(omega)
             self._write_vacf_and_pdos(j, nu, pdos, t, vacf_non, vacf_output)
 
     def _write_vacf_and_pdos(self, atom_type, nu, pdos, t, vacf_non, vacf_output):
         vacf_write = WriteFile(self.folder)
-
         output_filename = f'atom{atom_type}_pdos_{self.parameters["Nc"]}.txt'
         vacf_write.write_properties(output_filename, nu, pdos)
-
         output_filename = f'atom{atom_type}_vacf_non_{self.parameters["Nc"]}.txt'
         vacf_write.write_properties(output_filename, t, vacf_non)
-
         output_filename = f'atom{atom_type}_vacf_scale_{self.parameters["Nc"]}.txt'
         vacf_write.write_properties(output_filename, t, vacf_output)
 

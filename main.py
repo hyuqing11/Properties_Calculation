@@ -9,7 +9,7 @@ from Simulator import Simulator
 def main():
     """
     Simulation options:
-    - set vacf: 0
+    - set vacf and pdos: 0
     - set van hove: 1
     - set dynamics structures: 2
     - set propensity plot: 3
