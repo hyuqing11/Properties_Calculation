@@ -2,7 +2,7 @@
 
 This repository contains code for calculating various material properties using data obtained from molecular dynamics simulations (LAMMPS). Currently, the following calculations are supported:
 
-1. **Plot String in OVITO (property_type = 6):**
+1. **Plot Strings in OVITO (property_type = 6):**
    This option allows you to visualize the string configuration using OVITO software.
 
 2. **Van Hove Self Correlation (property_type = 1):**
