@@ -35,7 +35,8 @@ $$G_s(\vec{r},t)=\left<\frac{1}{N} \sum_{i=1}^{N} \delta(\vec{r}-|\vec{r}_i(t)-\
 - `dt`: The time step
 - `rDel`: The value of dr
 - `rCutoff`: The cut-off distance
-
+- `time_series`: The array that includes the different time intervals you would like to compute \( G_s \)
+- `gap`: For one run, the start of computing \( G_s \) is delayed by gap steps (different initial time)
 ### Required Files:
 - `conf.dump_all`: Includes atom positions and velocities
 
