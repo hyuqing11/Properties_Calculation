@@ -51,6 +51,20 @@ This option calculates the Velocity AutoCorrelation Function (VACF) and the Phon
 - **PDOS (Phonon Density of States):**
   PDOS gives insights into the material's vibrational modes. It is calculated using Fourier transform techniques and provides the distribution of vibrational frequencies in the material.
 
+### Input Data Required (input.json):
+- `num_atoms`: Total number of atoms in the system
+- `num_frame`: Total number of steps
+- `num_types`: Number of types of atoms in the system
+- `dim`: The dimension you computed
+- `dt`: The time step
+- `max_omega`: The largest frequency to compute PDOS
+- `d_omega`: The frequency step
+- `Nc`: The correlation time for VACF
+- `compute_type`: The array that specifies which atom type you are going to compute the VACF and PDOS for. If `compute_type` equals `num_types + 1`, then compute VACF for all the atoms.
+
+### Required Files:
+- `conf.dump_all`: Includes atom positions and velocities
+
 ## 4. Other Properties (Work in Progress)
 Additional material properties are currently under development and will be added to the repository soon.
 
