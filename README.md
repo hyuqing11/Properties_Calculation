@@ -3,7 +3,7 @@
 This repository contains code for calculating various material properties using molecular dynamics simulations. Currently, the following calculations are supported:
 
 1. **Plot String in OVITO (property_type = 6):**
-   This option allows you to visualize the string configuration using OVITO software. It provides insights into the structural evolution of the material over time.
+   This option allows you to visualize the string configuration using OVITO software.
 
 2. **Van Hove Self Correlation (property_type = 1):**
    The Van Hove self-correlation function quantifies the probability of finding an ion within a volume element dr, centered at r and time t, given that the ion was at the origin at time t=0. The formula is given by:
