@@ -6,8 +6,8 @@ class Post_Position:
 
     def cal_displacement(self,data1: np.ndarray, data2: np.ndarray, lattice: np.ndarray) -> np.ndarray:
         """Calculate the displacement vector considering periodic boundary conditions."""
-        dr = data1 - data2
-        dr -= np.round(dr / lattice) * lattice
+        dr = np.array(data1) - np.array(data2)
+        dr = dr - np.round(dr / lattice) * lattice
         return dr
 
     def wrap(self,dr: float, region: float) -> float:

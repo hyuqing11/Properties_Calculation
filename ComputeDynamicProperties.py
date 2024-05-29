@@ -3,23 +3,23 @@ from MathFunctions import MathFunctions
 import copy
 from Post_Position import Post_Position
 class ComputeDynamicProperties:
-    def __init__(self,atom_positions,atom_velocity, parameters ,lattice,atom_type):
+    def __init__(self,atom_positions,atom_velocity, parameters ,lattice):
         self.parameters = parameters
         self.lattice = lattice
         self.atom_positions = atom_positions
         self.atom_velocity = atom_velocity
-        self.atom_types = atom_type
+
 
     def spatial_correlation_time(self,num1,j,kk):
-        shells = int(self.parameters["rCutOff"] / self.parameters('rDel') + 1)
+        shells = int(self.parameters["rCutOff"] / self.parameters['rDel'] + 1)
         siOutput = np.zeros([num1, shells])
-        pos_org = self.atom_positions[kk * self.parameters['Nc']]
+        pos_org = self.atom_positions[kk * self.parameters['gap']]
         displacement_cal = Post_Position()
-        dr = displacement_cal.cal_displacement(pos_org, self.atom_positions[kk * self.parameters['Nc'] + j], self.lattice)
+        dr = displacement_cal.cal_displacement(pos_org, self.atom_positions[kk * self.parameters['gap'] + j], self.lattice)
         dr_mag = np.sqrt(np.sum(dr * dr, axis=1))
         for i in range(num1):
             if dr_mag[i] < self.parameters["rCutOff"]:
-                shellNum = int(np.floor(dr_mag[i] / self.parameters('rDel')))
+                shellNum = int(np.floor(dr_mag[i] / self.parameters['rDel']))
                 if shellNum > 0:
                     rCount = siOutput[i, shellNum]
                     rCount = rCount + 1
@@ -34,10 +34,9 @@ class ComputeDynamicProperties:
         Gr = []
         for kk in range(self.parameters['ave_num']):
             Gr.append([])
-        #sz_time = np.size(specific_time)
         for kk in range(self.parameters['ave_num']):
             for jj in self.parameters['time_series']:
-                meanShells, shells = self.spatial_correlation_time(self.parameters['rDel'],sz_pos[1],self.parameters['rCutOff'],jj,kk)
+                meanShells, shells = self.spatial_correlation_time(sz_pos[1],jj,kk)
                 Gr[kk].append(meanShells)
 
         Gr_mean = np.mean(np.array(Gr), axis=0)
@@ -49,9 +48,9 @@ class ComputeDynamicProperties:
         # Nc: number of correlation steps
         # dt: time interval between two frames, in units of ps
         # omega: phonon angular frequency points you want to consider
-        M = self.parameters['endsteps'] - self.parameters['Nc']  # number of time origins for time average
-        vacf = np.zeros(self.parameters['Nc'] )  # the velocity autocorrelation function (VACF)
-        for nc in (range(self.parameters['Nc'] )):  # loop over the correlation steps
+        M = self.parameters['num_frame'] - self.parameters['Nc']
+        vacf = np.zeros(self.parameters['Nc'] )
+        for nc in (range(self.parameters['Nc'] )):
 
             for m in range(M + 1):  # loop over the time origins
                 delta = np.sum(np.array(self.atom_velocity[m + 0]) * np.array(self.atom_velocity[m + nc]))

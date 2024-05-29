@@ -14,14 +14,11 @@ class Read_InputFile:
 
     def read_parameters_from_json(self,filename) -> Dict[str, Any]:
         """Reads parameters from a JSON file.
-
         Returns:
             A dictionary containing the parameters.
-
         Raises:
             SystemExit: If the file is not found or contains invalid JSON.
         """
-
         try:
             with open(filename, 'r') as file:
                 parameters = json.load(file)
@@ -35,11 +32,9 @@ class Read_InputFile:
 
     def check_parameters(self, parameters: Dict[str, Any], property_type: int):
         """Checks if all required parameters are present for a given property type.
-
         Args:
             parameters: A dictionary of parameters read from the JSON file.
             property_type: An integer representing the property type.
-
         Raises:
             SystemExit: If any required parameters are missing.
         """
@@ -54,19 +49,17 @@ class Read_InputFile:
 
     def _get_required_params(self, property_type: int) -> list:
         """Returns a list of required parameter keys based on the property type.
-
         Args:
             property_type: An integer representing the property type.
-
         Returns:
             A list of required parameter keys.
         """
         if property_type == 1:
-            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'rDel', 'rCutOff', 'Nc', 'time_series',
-                    'output_filename', 'compute_type']
+            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'rDel', 'rCutOff', 'gap', 'time_series',
+                    'compute_type','ave_num']
         elif property_type == 0:
-            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'ave_num', 'max_omega', 'd_omega', 'Nc',
-                    'output_filename', 'compute_type']
+            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
+                    'compute_type']
         elif property_type == 4:
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'compute_type', 'start_steps','cutoff_distance','rDel']
         elif property_type == 6:
