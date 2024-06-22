@@ -4,9 +4,9 @@ This repository contains code for calculating various material properties using 
 
 ## 1. Plot Strings in OVITO (property_type = 6)
 This option allows you to visualize the string configuration using OVITO software. Strings are accessed by connecting mobile atoms i and j if:
-$$|\vec{r}_i(t)-\vec{r}_j(t)|<\delta$$
+$$|\vec{r}_i(t)-\vec{r}_j(0)|<\delta$$
 or
-$$|\vec{r}_j(t)-\vec{r}_i(t)|<\delta$$
+$$|\vec{r}_j(t)-\vec{r}_i(0)|<\delta$$
 
 ### Input Data Required (input.json):
 - `num_atoms`: Total number of atoms in the system
