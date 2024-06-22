@@ -61,14 +61,21 @@ class Read_InputFile:
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
                     'compute_type']
         elif property_type == 4:
-            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'compute_type', 'start_steps','cutoff_distance','rDel']
+            return ['num_atoms', 'num_frame', 'num_types', 'compute_type', 'q_dir','uCell']
         elif property_type == 6:
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'steps_read', 'initial_read',
                     'time_index','minimum_length']
+        elif property_type ==2:
+            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
+                    'compute_type', 'write_parameters','vectors','q_dir','integration_list']
+        elif property_type == 3:
+            return ['max_omega', 'd_omega']
 
         # Add other property types and their required parameters here
 
         else:
             print(f"Error: Unsupported property type '{property_type}'.")
             sys.exit(1)
+
+
 

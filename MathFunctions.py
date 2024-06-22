@@ -19,3 +19,6 @@ class MathFunctions:
         for i in range(1, nf - 1):
             s = s + f[i]
         return s
+
+
+

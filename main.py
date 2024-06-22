@@ -5,6 +5,7 @@ import os
 from ReadConfiguration import ReadConfiguration
 from Read_InputFile import Read_InputFile
 from Simulator import Simulator
+from IntegrationDynamicStructure import IntegrationDynamicStructure
 
 def main():
     """
@@ -33,12 +34,16 @@ def main():
         parameters['num_atoms'],
         parameters['dim']
     )
-    pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict = config_reader.read_lammps()
-    latt = latt_matrix[:, 1] - latt_matrix[:, 0]
+    if 'integrationOnly' in parameters:
+        IntDyn = IntegrationDynamicStructure(current_folder,parameters)
+        IntDyn._integration_dynamic_structure()
+    else:
+        pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict = config_reader.read_lammps()
+        latt = latt_matrix[:, 1] - latt_matrix[:, 0]
 
-    # Run simulation based on input parameters
-    simulator = Simulator(parameters, pos, vel, latt, atom_pos_dict, atom_vel_dict, latt_matrix)
-    simulator.simulator_choice(current_folder)
+        # Run simulation based on input parameters
+        simulator = Simulator(parameters, pos, vel, latt, atom_pos_dict, atom_vel_dict, latt_matrix)
+        simulator.simulator_choice(current_folder)
 
     print("Simulation completed")
 

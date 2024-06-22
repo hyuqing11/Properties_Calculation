@@ -64,6 +64,55 @@ class ComputeDynamicProperties:
 
         return vacf_non, vacf_output, pdos
 
+    def compute_q_vectors(self):
+        q = np.zeros((self.parameters['vectors'], 3))
+        non_zero_index = np.where(self.parameters['q_dir'] != 0)[0][0]
+        for i in range(self.parameters['vectors']):
+            q[i] = np.array(self.parameters['q_dir'] )* (i + 1) / self.parameters['uCell'][non_zero_index] * 2 * np.pi / \
+                   self.lattice[non_zero_index]
+        return q
+
+
+    def calculate_intermediate_scattering(self):
+        q = self.compute_q_vectors()
+        M = self.parameters['num_frame'] - self.parameters['Nc']
+        fd = np.zeros((self.parameters['vectors'],self.parameters['Nc']))
+        for kk in range(self.parameters['vectors']):
+            c = np.sum(np.cos(np.sum(q[kk] * self.atom_positions, axis=2)), axis=1)
+            s = np.sum(np.sin(np.sum(q[kk] * self.atom_positions, axis=2)), axis=1)
+            for nc in range(self.parameters['Nc']):
+                for m in range(M+1):
+                    delta = (c[m + 0] * c[m + nc] + s[m + 0] * s[m + nc])
+                    fd[kk,nc] = fd[kk,nc] + delta
+        num_atoms = np.shape(self.atom_positions)
+        fd_scale = fd/((M+1)*num_atoms[1])
+        return fd_scale
+
+    def calculate_dynamic_structure(self, omega, fd_scale):
+        fft = MathFunctions()
+        Sv = np.zeros((self.parameters['vectors'],len(omega)))
+        for i in range(self.parameters['vectors']):
+            Sv[i] = fft.compute_fourier_transform(fd_scale, self.parameters['Nc'], omega,self.parameters['dt'])
+        return Sv
+
+    def Integrate_dynamic_structure(self, Sv):
+
+        q = self.compute_q_vectors()
+        non_zero_index = np.where(self.parameters['q_dir'] != 0)[0][0]
+        num_integration = len(self.parameters['integration_list'])
+        num_Sv = np.shape(Sv)
+        S_int_record = np.zeros((num_integration, num_Sv[1]))
+        for n, (q_min, q_max) in enumerate(self.parameters['integration_list']):
+            for i in range(self.parameters['vectors']):
+                if (q[i,non_zero_index] > q_min) & (q[i,non_zero_index] < q_max):
+                    S_int_record[n] += Sv[i]
+            return S_int_record
+
+
+
+
+
+
 
 
 

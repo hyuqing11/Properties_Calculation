@@ -66,7 +66,10 @@ This option calculates the Velocity AutoCorrelation Function (VACF) and the Phon
 ### Required Files:
 - `conf.dump_all`: Includes atom positions and velocities
 
-## 4. Other Properties (Work in Progress)
+## 4. Imtermeidate Scattering Function (property_type=2)
+This opetion calculates the imtermediate scattering function and dynamics structure factors for materials
+
+## 5. Other Properties (Work in Progress)
 Additional material properties are currently under development and will be added to the repository soon.
 
 Stay tuned for updates and improvements!
