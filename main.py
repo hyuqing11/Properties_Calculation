@@ -18,7 +18,7 @@ def main():
     - set oct analysis: 5
     - set string analysis: 6
     """
-    current_folder = '/Users/hyuqing/Downloads/research/YH2/YHx/YH1.98/msd/900/1/'
+    current_folder = os.getcwd()
     input_filename = 'input.json'
 
     # Read and validate input parameters
