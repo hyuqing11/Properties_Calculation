@@ -92,7 +92,7 @@ class ComputeDynamicProperties:
         fft = MathFunctions()
         Sv = np.zeros((self.parameters['vectors'],len(omega)))
         for i in range(self.parameters['vectors']):
-            Sv[i] = fft.compute_fourier_transform(fd_scale, self.parameters['Nc'], omega,self.parameters['dt'])
+            Sv[i] = fft.compute_fourier_transform(fd_scale[i], self.parameters['Nc'], omega,self.parameters['dt'])
         return Sv
 
     def Integrate_dynamic_structure(self, Sv):

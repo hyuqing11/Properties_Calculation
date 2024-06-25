@@ -4,6 +4,7 @@ from Read_String_Data import Read_String_Data
 from String_Visualization import String_Visualization
 from ComputeDynamicProperties import ComputeDynamicProperties
 from WriteFile import WriteFile
+import sys
 from ReadProperties import ReadProperties
 from IntegrationDynamicStructure import IntegrationDynamicStructure
 
@@ -50,14 +51,17 @@ class Simulator:
         """Compute the van Hove self-correlation function and write results."""
         print("Compute van Hove self-correlation")
         for j in self.parameters['compute_type']:
-            van_hov_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
-                                                   self.latt)
+            if j > self.parameters['num_types'] + 1:
+                print(f"Error: Unknow atom type.")
+                sys.exit(1)
+            if j == self.parameters['num_types'] + 1:
+                van_hov_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,
+                                                       self.latt)
+            else:
+                van_hov_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
+                                                       self.latt)
             Gr_mean, shells, r = van_hov_cal.calculate_van_hove_function()
-            sz_time = np.size(self.parameters['time_series'])
-            for i in range(sz_time):
-                output_filename = f'atom_Gs_{j}_{self.parameters["time_series"][i]}.txt'
-                van_hov_write = WriteFile(folder,self.parameters)
-                van_hov_write.write_results(output_filename, r, Gr_mean[i])
+            self._write_van_hove_results(folder, j, Gr_mean, r)
 
     def _compute_vacf_and_pdos(self,folder):
         """Compute the Velocity Auto-Correlation Function (VACF) and Phonon Density of States (PDOS)."""
@@ -85,31 +89,49 @@ class Simulator:
         dt = self.parameters['dt']
         t = np.arange(self.parameters['Nc']) * dt
         for j in self.parameters['compute_type']:
-            dynamic_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
-                                                   self.latt)
+            if j > self.parameters['num_types'] + 1:
+                print(f"Error: Unknow atom type.")
+                sys.exit(1)
+            if j == self.parameters['num_types'] + 1:
+                dynamic_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,
+                                                       self.latt)
+            else:
+                dynamic_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,self.latt)
             fd_scale = dynamic_cal.calculate_intermediate_scattering()
             if wr1:
-                for i in range(self.parameters['vectors']):
-
-                    output_filename = 'Intermediate_scattering_' + str(j) + '_' + str(i) + '.txt'
-                    interscatter_write = WriteFile(folder,self.parameters)
-                    interscatter_write.write_results(output_filename,t,fd_scale[i])
+                self._write_intermediate_scattering(folder, j, t, fd_scale)
 
             Sv = dynamic_cal.calculate_dynamic_structure(omega, fd_scale)
             if wr2:
-                for i in range(self.parameters['vectors']):
-                    output_filename = 'dynamic_structure_' + str(j) + '_' + str(
-                        i) + '.txt'
-                    dynstructure_write = WriteFile(folder, self.parameters)
-                    dynstructure_write.write_results(output_filename, nu, Sv[i])
+                self._write_dynamic_structure(folder, j, nu, Sv)
             S_intgr = dynamic_cal.Integrate_dynamic_structure(Sv)
             if wr3:
-                for i in range(len(self.parameters['integration_list'])):
-                    output_filename = 'Integration_dynamic_structure_' + str(j) + '_' + str(i)+ '.txt'
-                    intdyn_write = WriteFile(folder, self.parameters)
-                    intdyn_write.write_results(output_filename,nu,S_intgr[i])
+                self._write_integration_dynamic_structure(folder, j, nu, S_intgr)
 
+    def _write_van_hove_results(self, folder: str, atom_type: int, Gr_mean: np.ndarray, r: np.ndarray):
+        sz_time = np.size(self.parameters['time_series'])
+        for i in range(sz_time):
+            output_filename = f'atom_Gs_{atom_type}_{self.parameters["time_series"][i]}.txt'
+            van_hov_write = WriteFile(folder, self.parameters)
+            van_hov_write.write_results(output_filename, r, Gr_mean[i])
 
+    def _write_intermediate_scattering(self, folder: str, atom_type: int, t: np.ndarray, fd_scale: np.ndarray):
+        for i in range(self.parameters['vectors']):
+            output_filename = f'Intermediate_scattering_{atom_type}_{i}.txt'
+            interscatter_write = WriteFile(folder, self.parameters)
+            interscatter_write.write_results(output_filename, t, fd_scale[i])
+
+    def _write_dynamic_structure(self, folder: str, atom_type: int, nu: np.ndarray, Sv: np.ndarray):
+        for i in range(self.parameters['vectors']):
+            output_filename = f'dynamic_structure_{atom_type}_{i}.txt'
+            dynstructure_write = WriteFile(folder, self.parameters)
+            dynstructure_write.write_results(output_filename, nu, Sv[i])
+
+    def _write_integration_dynamic_structure(self, folder: str, atom_type: int, nu: np.ndarray, S_intgr: np.ndarray):
+        for i in range(len(self.parameters['integration_list'])):
+            output_filename = f'Integration_dynamic_structure_{atom_type}_{i}.txt'
+            intdyn_write = WriteFile(folder, self.parameters)
+            intdyn_write.write_results(output_filename, nu, S_intgr[i])
 
     def _write_vacf_and_pdos(self, atom_type, nu, pdos, t, vacf_non, vacf_output,folder):
         """Write the results of VACF and PDOS computations to files."""

@@ -21,7 +21,7 @@ class Read_InputFile:
                 content = file.read()
                 content_no_comments = self.remove_comments(content)
                 parameters = json.loads(content_no_comments)
-                if parameters.get('property_type') in [0,2] and parameters.get('system') == 'vasp':
+                if parameters.get('property_type') in [0] and parameters.get('system') == 'vasp':
                     parameters['compute_velocity'] = 1
                 else:
                     parameters['compute_velocity'] = 0
