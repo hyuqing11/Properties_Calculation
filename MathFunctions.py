@@ -1,4 +1,5 @@
 import numpy as np
+import math
 class MathFunctions:
     def __init(self,f):
         pass
@@ -20,5 +21,8 @@ class MathFunctions:
             s = s + f[i]
         return s
 
+
+    def sum_of_squares(self,matrix):
+        return np.sqrt([sum(x**2 for x in row) for row in matrix])
 
 

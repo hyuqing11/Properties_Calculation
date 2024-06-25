@@ -62,7 +62,7 @@ class ReadConfiguration:
         dr = np.subtract(data1, data2)
         dr = dr - np.round(dr)
         return dr
-    def compute_velocity(self,pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict,,elements,atom_counts):
+    def compute_velocity(self,pos, vel, latt_matrix, atom_vel_dict,elements,atom_counts):
         dr_car = np.zeros((self.num_frame - 1, self.num_atoms, 3))
         dr = np.zeros((self.num_frame - 1,self.num_atoms, 3))
         if len(latt_matrix) > 1:
@@ -72,13 +72,18 @@ class ReadConfiguration:
         else:
             npt = 0
         for j in range(1,self.num_frame):
-            latt = latt_matrix[j - 1] if npt else latt_matrix[0]
+            if npt:
+                latt_prev = latt_matrix[j - 1]
+                latt_curr = latt_matrix[j]
+            else:
+                latt_prev = latt_matrix[0]
+                latt_curr = latt_matrix[0]
             trans = np.transpose(
-                np.dot(np.transpose(np.linalg.inv(latt)),
-                       (np.dot(np.transpose(latt), np.transpose(pos[j])))))
+            np.dot(np.transpose(np.linalg.inv((latt_prev))), (np.dot(np.transpose(latt_curr), np.transpose(pos[j])))))
             dr[j - 1] = self.displacement(trans, pos[j - 1])
-            dr_car[j - 1] = np.transpose(np.dot(np.transpose(latt), np.transpose(dr[j - 1])))
+            dr_car[j - 1] = np.transpose(np.dot(np.transpose(latt_prev), np.transpose(dr[j - 1])))
             vel[j - 1] = dr_car[j - 1] / self.parameters['dt']
+            start_i = 0
             for i in range(len(elements)):
                 end_i = start_i + atom_counts[i]
                 atom_vel_dict[i + 1].append(vel[j-1, start_i:end_i])
@@ -111,8 +116,8 @@ class ReadConfiguration:
                 n += 1
                 if n + 1 > self.num_frame:
                     break
-        if compute_velocity:
-            self.compute_velocity(pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict,elements,atom_counts)
+        if  self.parameters['compute_velocity']:
+            self.compute_velocity(pos, vel, latt_matrix, atom_vel_dict,elements,atom_counts)
         return pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict
 
 

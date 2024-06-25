@@ -1,6 +1,7 @@
 import json
 import sys
 from typing import Dict, Any
+import re
 class Read_InputFile:
     def __init__(self,folder):
         self.folder = folder
@@ -14,14 +15,16 @@ class Read_InputFile:
 
     def read_parameters_from_json(self,filename) -> Dict[str, Any]:
         """Reads parameters from a JSON file.
-        Returns:
-            A dictionary containing the parameters.
-        Raises:
-            SystemExit: If the file is not found or contains invalid JSON.
         """
         try:
             with open(filename, 'r') as file:
-                parameters = json.load(file)
+                content = file.read()
+                content_no_comments = self.remove_comments(content)
+                parameters = json.loads(content_no_comments)
+                if parameters.get('property_type') in [0,2] and parameters.get('system') == 'vasp':
+                    parameters['compute_velocity'] = 1
+                else:
+                    parameters['compute_velocity'] = 0
             return parameters
         except FileNotFoundError:
             print(f"Error: JSON file '{filename}' not found.")
@@ -29,6 +32,24 @@ class Read_InputFile:
         except json.JSONDecodeError:
             print(f"Error: Invalid JSON format in '{filename}'.")
             sys.exit(1)
+
+
+    def remove_comments(self, json_str: str) -> str:
+        """Removes any lines starting with // or # and inline comments from a JSON string.
+        """
+        # Split the content into lines
+        lines = json_str.split('\n')
+
+        # Remove lines that start with // or #
+        lines = [line for line in lines if not line.strip().startswith(("//", "#"))]
+
+        # Join lines back into a single string
+        json_str = '\n'.join(lines)
+
+        # Remove inline comments
+        json_str = re.sub(r'\/\/.*', '', json_str)  # Remove // comments
+        json_str = re.sub(r'\s*#.*', '', json_str)  # Remove # comments
+        return json_str
 
     def check_parameters(self, parameters: Dict[str, Any], property_type: int):
         """Checks if all required parameters are present for a given property type.
@@ -49,10 +70,6 @@ class Read_InputFile:
 
     def _get_required_params(self, property_type: int) -> list:
         """Returns a list of required parameter keys based on the property type.
-        Args:
-            property_type: An integer representing the property type.
-        Returns:
-            A list of required parameter keys.
         """
         if property_type == 1:
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'rDel', 'rCutOff', 'gap', 'time_series',
@@ -66,7 +83,7 @@ class Read_InputFile:
             return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'steps_read', 'initial_read',
                     'time_index','minimum_length']
         elif property_type ==2:
-            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
+            return ['system','num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
                     'compute_type', 'write_parameters','vectors','q_dir','integration_list']
         elif property_type == 3:
             return ['max_omega', 'd_omega']
