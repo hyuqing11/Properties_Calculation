@@ -2,9 +2,10 @@ import numpy as np
 from ReadProperties import ReadProperties
 from WriteFile import WriteFile
 class IntegrationDynamicStructure:
-    def __init__(self, folder, parameters):
+    def __init__(self, folder, parameters,lattice):
         self.folder = folder
         self.parameters = parameters
+        self.lattice = lattice
     def _integration_dynamic_structure(self):
         read_dynstructure = ReadProperties(self.folder)
 
