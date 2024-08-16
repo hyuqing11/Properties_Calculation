@@ -8,7 +8,8 @@ from Simulator import Simulator
 from IntegrationDynamicStructure import IntegrationDynamicStructure
 from MathFunctions import MathFunctions
 
-
+# add lines
+# add test again
 def read_input_parameters(current_folder, input_filename):
     """
     Reads and validates input parameters from a file.
