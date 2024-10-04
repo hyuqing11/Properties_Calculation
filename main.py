@@ -1,6 +1,4 @@
-import numpy as np
-import sys
-import json
+
 import os
 from ReadConfiguration import ReadConfiguration
 from Read_InputFile import Read_InputFile
@@ -8,8 +6,7 @@ from Simulator import Simulator
 from IntegrationDynamicStructure import IntegrationDynamicStructure
 from MathFunctions import MathFunctions
 
-# add lines
-# add test again
+
 def read_input_parameters(current_folder, input_filename):
     """
     Reads and validates input parameters from a file.
@@ -54,7 +51,7 @@ def read_configuration(parameters, current_folder):
         pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict = config_reader.read_lammps()
         latt = latt_matrix[:, 1] - latt_matrix[:, 0]
     elif parameters['system'] == 'vasp':
-        pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict = config_reader.read_vasp(parameters['SysName'], False)
+        pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict = config_reader.read_vasp(parameters['SysName'])
         sum_square = MathFunctions()
         latt = sum_square.sum_of_squares(latt_matrix[0])
         pos = pos * latt

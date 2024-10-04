@@ -66,7 +66,9 @@ class ComputeDynamicProperties:
 
     def compute_q_vectors(self):
         q = np.zeros((self.parameters['vectors'], 3))
-        non_zero_index = np.where(self.parameters['q_dir'] != 0)[0][0]
+        #print(self.parameters['q_dir'])
+        #print(np.where(self.parameters['q_dir'] != 0))
+        non_zero_index = np.where(np.array(self.parameters['q_dir']) != 0)[0][0]
         for i in range(self.parameters['vectors']):
             q[i] = np.array(self.parameters['q_dir'] )* (i + 1) / self.parameters['uCell'][non_zero_index] * 2 * np.pi / \
                    self.lattice[non_zero_index]
@@ -98,7 +100,7 @@ class ComputeDynamicProperties:
     def Integrate_dynamic_structure(self, Sv):
 
         q = self.compute_q_vectors()
-        non_zero_index = np.where(self.parameters['q_dir'] != 0)[0][0]
+        non_zero_index = np.where(np.array(self.parameters['q_dir']) != 0)[0][0]
         num_integration = len(self.parameters['integration_list'])
         num_Sv = np.shape(Sv)
         S_int_record = np.zeros((num_integration, num_Sv[1]))
@@ -106,7 +108,7 @@ class ComputeDynamicProperties:
             for i in range(self.parameters['vectors']):
                 if (q[i,non_zero_index] > q_min) & (q[i,non_zero_index] < q_max):
                     S_int_record[n] += Sv[i]
-            return S_int_record
+        return S_int_record
 
 
 

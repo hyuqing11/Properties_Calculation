@@ -1,7 +1,6 @@
 import numpy as np
-import math
 class MathFunctions:
-    def __init(self,f):
+    def __init__(self):
         pass
     def compute_fourier_transform(self,f,Nc, omega, dt):
         #f is the funtion that you would like to do the Fourier transform
@@ -24,5 +23,4 @@ class MathFunctions:
 
     def sum_of_squares(self,matrix):
         return np.sqrt([sum(x**2 for x in row) for row in matrix])
-
 
