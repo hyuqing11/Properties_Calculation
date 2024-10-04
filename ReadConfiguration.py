@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Tuple, Dict, List
-from MathFunctions import MathFunctions
+
 
 class ReadConfiguration:
     def __init__(self, filename: str,parameters):

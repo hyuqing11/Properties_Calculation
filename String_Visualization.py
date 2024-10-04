@@ -1,6 +1,4 @@
 from WriteFile import WriteFile
-import numpy as np
-import sys
 class String_Visualization:
     def __init__(self,pos,parameters,folder,latt_matrix,string_dictionaries):
         self.pos = pos

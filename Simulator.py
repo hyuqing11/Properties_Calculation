@@ -1,12 +1,11 @@
-import os
+
 import numpy as np
 from Read_String_Data import Read_String_Data
 from String_Visualization import String_Visualization
 from ComputeDynamicProperties import ComputeDynamicProperties
 from WriteFile import WriteFile
 import sys
-from ReadProperties import ReadProperties
-from IntegrationDynamicStructure import IntegrationDynamicStructure
+
 
 class Simulator:
     def __init__(self, parameters, pos, vel, latt, atom_pos_dict, atom_vel_dict, latt_matrix):
@@ -52,7 +51,7 @@ class Simulator:
         print("Compute van Hove self-correlation")
         for j in self.parameters['compute_type']:
             if j > self.parameters['num_types'] + 1:
-                print(f"Error: Unknow atom type.")
+                print("Error: Unknow atom type.")
                 sys.exit(1)
             if j == self.parameters['num_types'] + 1:
                 van_hov_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,
@@ -90,7 +89,7 @@ class Simulator:
         t = np.arange(self.parameters['Nc']) * dt
         for j in self.parameters['compute_type']:
             if j > self.parameters['num_types'] + 1:
-                print(f"Error: Unknow atom type.")
+                print("Error: Unknow atom type.")
                 sys.exit(1)
             if j == self.parameters['num_types'] + 1:
                 dynamic_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,

@@ -1,6 +1,5 @@
 import numpy as np
 from MathFunctions import MathFunctions
-from scipy.fft import dct
 import pytest
 def test_trapezoidal_integration():
     math_functions = MathFunctions()
