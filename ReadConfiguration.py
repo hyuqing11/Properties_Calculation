@@ -90,7 +90,7 @@ class ReadConfiguration:
                 start_i = end_i
         #if len(latt_matrix) == 1:
 
-    def read_vasp(self,sysName,compute_velocity):
+    def read_vasp(self,sysName):
         with open(self.filename,'r') as f:
             contcar = f.readlines()
         pos = np.zeros((self.num_frame,self.num_atoms,self.dim))
