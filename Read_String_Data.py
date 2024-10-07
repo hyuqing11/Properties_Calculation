@@ -1,7 +1,7 @@
 import os
 import re
 import numpy as np
-from typing import List, Tuple
+from typing import Tuple
 class Read_String_Data:
     def __init__(self,folder,parameters):
         self.folder = folder

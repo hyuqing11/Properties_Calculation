@@ -10,6 +10,7 @@ class ComputeDynamicProperties:
         self.atom_velocity = atom_velocity
 
 
+
     def spatial_correlation_time(self,num1,j,kk):
         shells = int(self.parameters["rCutOff"] / self.parameters['rDel'] + 1)
         siOutput = np.zeros([num1, shells])
@@ -109,6 +110,9 @@ class ComputeDynamicProperties:
                 if (q[i,non_zero_index] > q_min) & (q[i,non_zero_index] < q_max):
                     S_int_record[n] += Sv[i]
         return S_int_record
+
+
+
 
 
 

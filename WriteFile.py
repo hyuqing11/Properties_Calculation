@@ -1,4 +1,4 @@
-
+import numpy as np
 class WriteFile:
     def __init__(self, folder, parameters):
         self.folder = folder
@@ -34,3 +34,24 @@ class WriteFile:
         with open(output_filename, "w") as fw:
             for xi, yi in zip(x, y):
                 fw.write(f"{xi:.8f} \t {yi:.16f}\n")
+
+
+    def write_cd(self,Cd, folder,time):
+        shells = int(self.parameters['rCut'] / self.parameters['rDel']) + 1
+        r = np.array(range(shells)) * self.parameters['rDel']
+        sz1, sz2 = np.shape(Cd)
+        for i in range(sz2):
+            filename = 'Cd_' + str(r[i]) + '.txt'
+            with open(folder + filename, 'w') as fw1:
+                for j in range(sz1):
+                    fw1.write(f'{time[j]:.8f} \t {Cd[j][i]:.8f}\n')
+
+
+    def write_facilitation(self,r, mean_Shells_record,mean_Shells1_record):
+        sz_gap = len(mean_Shells1_record)
+        size_r = np.size(r)
+        gap_array = range(self.parameters['start_gap'], self.parameters['end_gap'], self.parameters['gap'])
+        for i in range(sz_gap):
+            with open(self.folder + 'Prob_ion_' + str(gap_array[i]), 'w')as fw:
+                for j in range(size_r):
+                    fw.write(f'{r[j]:.8f} \t {mean_Shells_record[i][j]:.8f} \t {mean_Shells1_record[i][j]:.8f} \n')

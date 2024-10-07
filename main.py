@@ -1,10 +1,15 @@
 
 import os
+import logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 from ReadConfiguration import ReadConfiguration
 from Read_InputFile import Read_InputFile
 from Simulator import Simulator
 from IntegrationDynamicStructure import IntegrationDynamicStructure
 from MathFunctions import MathFunctions
+
+
 
 
 def read_input_parameters(current_folder, input_filename):
@@ -90,7 +95,10 @@ def main():
     - set Cd: 4
     - set oct analysis: 5
     - set string analysis: 6
+    - set dynamic facilition: 7
     """
+    logger = logging.getLogger(__name__)
+    logger.info("Starting calculating the materials properties")
     current_folder = os.getcwd()
     input_filename = 'input.json'
 
@@ -98,9 +106,9 @@ def main():
     parameters = read_input_parameters(current_folder, input_filename)
 
     # Run the simulation based on input parameters
-    run_simulation(parameters, current_folder)
+    run_simulation(parameters, current_folder)\
 
-    print("Simulation completed")
+    logging.info("Simulation completed")
 
 
 if __name__ == "__main__":

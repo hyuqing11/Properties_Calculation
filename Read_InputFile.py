@@ -6,7 +6,7 @@ class Read_InputFile:
     def __init__(self,folder):
         self.folder = folder
 
-    def read_and_validate_parameters(self,filename,property_type=0) -> dict:
+    def read_and_validate_parameters(self,filename) -> dict:
         input_filename = self.folder + '/' + filename
         parameters = self.read_parameters_from_json(input_filename)
         property_type = parameters['property_type']
@@ -72,21 +72,23 @@ class Read_InputFile:
         """Returns a list of required parameter keys based on the property type.
         """
         if property_type == 1:
-            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'rDel', 'rCutOff', 'gap', 'time_series',
+            return ['system','num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'rDel', 'rCutOff', 'gap', 'time_series',
                     'compute_type','ave_num']
         elif property_type == 0:
-            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
+            return ['system','num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
                     'compute_type']
         elif property_type == 4:
-            return ['num_atoms', 'num_frame', 'num_types', 'compute_type', 'q_dir','uCell']
+            return ['system','num_atoms', 'num_frame', 'num_types', 'compute_type', 'q_dir','uCell']
         elif property_type == 6:
-            return ['num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'steps_read', 'initial_read',
+            return ['system','num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'gap', 'ave_num', 'steps_read', 'initial_read',
                     'time_index','minimum_length']
         elif property_type ==2:
             return ['system','num_atoms', 'num_frame', 'num_types', 'dim', 'dt', 'max_omega', 'd_omega', 'Nc',
                     'compute_type', 'write_parameters','vectors','q_dir','integration_list']
         elif property_type == 3:
             return ['max_omega', 'd_omega']
+        elif property_type == 7:
+            return ['system','num_atoms','num_frame','num_types', 'dim','start_gap','end_gap','gap','compute_type','rDel']
 
         # Add other property types and their required parameters here
 

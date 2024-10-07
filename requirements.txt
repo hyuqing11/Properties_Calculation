@@ -4,5 +4,6 @@ numpy==2.1.1
 packaging==24.1
 pluggy==1.5.0
 pytest==8.3.3
+ruff==0.6.8
 scipy==1.14.1
 tomli==2.0.2
