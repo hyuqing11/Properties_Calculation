@@ -15,6 +15,9 @@ class ReadConfiguration:
         np.ndarray, np.ndarray, np.ndarray, Dict[int, List[List[np.ndarray]]], Dict[int, List[List[np.ndarray]]]]:
         """Reads LAMMPS dump file and extracts positions, velocities, and lattice information.
 
+        Optimized version: Uses batch reading and vectorized operations for better performance
+        with large atom files.
+
         Returns:
             pos: Positions array of shape (num_frame, num_atoms, dim).
             vel: Velocities array of shape (num_frame, num_atoms, dim).
@@ -25,36 +28,47 @@ class ReadConfiguration:
         pos = np.zeros((self.num_frame, self.num_atoms, self.dim))
         vel = np.zeros((self.num_frame, self.num_atoms, self.dim))
         latt_matrix = np.zeros((3, 2))
-        atom_pos_dict = {i: [] for i in range(1, self.num_types + 1)}
-        atom_vel_dict = {i: [] for i in range(1, self.num_types + 1)}
+
+        # Pre-allocate array for atom types
+        atom_types = np.zeros((self.num_frame, self.num_atoms), dtype=int)
 
         with open(self.filename, "r") as fin:
             for frame in range(self.num_frame):
-                # Skip headers
+                # Skip headers (5 lines)
                 for _ in range(5):
                     next(fin)
 
-                # Read lattice matrix
+                # Read lattice matrix (3 lines)
                 for jj in range(3):
                     line = fin.readline().split()
                     latt_matrix[jj] = [float(value) for value in line]
 
                 next(fin)  # Skip the blank line
 
-                # Initialize storage for this frame
-                for atom_type in range(1, self.num_types + 1):
-                    atom_pos_dict[atom_type].append([])
-                    atom_vel_dict[atom_type].append([])
+                # Read all atom data for this frame at once (batch reading)
+                atom_lines = []
+                for _ in range(self.num_atoms):
+                    atom_lines.append(fin.readline())
 
-                # Read positions and velocities
-                for atom in range(self.num_atoms):
-                    line = fin.readline().split()
-                    values = [float(value) for value in line]
-                    pos[frame, atom] = values[1:4]
-                    vel[frame, atom] = values[4:7]
-                    atom_type = int(values[-1])
-                    atom_pos_dict[atom_type][-1].append(pos[frame, atom])
-                    atom_vel_dict[atom_type][-1].append(vel[frame, atom])
+                # Join lines and parse as a single block using NumPy
+                atom_data_str = ''.join(atom_lines)
+                atom_data = np.fromstring(atom_data_str, sep=' ').reshape(self.num_atoms, -1)
+
+                # Extract positions, velocities, and atom types using array slicing
+                pos[frame] = atom_data[:, 1:4]
+                vel[frame] = atom_data[:, 4:7]
+                atom_types[frame] = atom_data[:, -1].astype(int)
+
+        # Build atom dictionaries using pre-computed atom types (more efficient)
+        atom_pos_dict = {i: [] for i in range(1, self.num_types + 1)}
+        atom_vel_dict = {i: [] for i in range(1, self.num_types + 1)}
+
+        for frame in range(self.num_frame):
+            for atom_type in range(1, self.num_types + 1):
+                # Use boolean indexing to select atoms of specific type
+                type_mask = atom_types[frame] == atom_type
+                atom_pos_dict[atom_type].append(pos[frame, type_mask])
+                atom_vel_dict[atom_type].append(vel[frame, type_mask])
 
         return pos, vel, latt_matrix, atom_pos_dict, atom_vel_dict
 
@@ -122,11 +136,14 @@ class ReadConfiguration:
 
 
     def convert_lines_to_data(self,lines):
-        data = []
-        for line in lines:
-            tem = line.split()
-            row = list(map(float, tem))
-            data.append(row)
+        """Convert lines to numpy array efficiently using vectorized parsing."""
+        # Join all lines and use numpy's faster string parsing
+        lines_str = ''.join(lines)
+        # Count columns from first line
+        first_line = lines[0].split()
+        num_cols = len(first_line)
+        # Parse all at once
+        data = np.fromstring(lines_str, sep=' ').reshape(len(lines), num_cols)
         return data
 
     def _skip_lines(self, file, num_lines):

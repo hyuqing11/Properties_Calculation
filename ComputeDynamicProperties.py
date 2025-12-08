@@ -1,6 +1,5 @@
 import numpy as np
 from MathFunctions import MathFunctions
-import copy
 from Post_Position import Post_Position
 class ComputeDynamicProperties:
     def __init__(self,atom_positions,atom_velocity, parameters ,lattice):
@@ -17,13 +16,18 @@ class ComputeDynamicProperties:
         displacement_cal = Post_Position()
         dr = displacement_cal.cal_displacement(pos_org, self.atom_positions[kk * self.parameters['gap'] + j], self.lattice)
         dr_mag = np.sqrt(np.sum(dr * dr, axis=1))
-        for i in range(num1):
-            if dr_mag[i] < self.parameters["rCutOff"]:
-                shellNum = int(np.floor(dr_mag[i] / self.parameters['rDel']))
-                if shellNum > 0:
-                    rCount = siOutput[i, shellNum]
-                    rCount = rCount + 1
-                    siOutput[i, shellNum] = rCount
+
+        # Vectorized version - avoid explicit loop
+        # Create boolean mask for valid shells
+        valid_mask = dr_mag < self.parameters["rCutOff"]
+        shellNums = np.floor(dr_mag / self.parameters['rDel']).astype(int)
+
+        # Only process atoms within cutoff and with shellNum > 0
+        valid_indices = np.where(valid_mask & (shellNums > 0))[0]
+
+        # Use advanced indexing to increment counts
+        for i in valid_indices:
+            siOutput[i, shellNums[i]] += 1
 
         mean_Shells = siOutput.mean(0)
         return mean_Shells, shells
@@ -49,18 +53,29 @@ class ComputeDynamicProperties:
         # dt: time interval between two frames, in units of ps
         # omega: phonon angular frequency points you want to consider
         M = self.parameters['num_frame'] - self.parameters['Nc']
-        vacf = np.zeros(self.parameters['Nc'] )
-        for nc in (range(self.parameters['Nc'] )):
 
-            for m in range(M + 1):  # loop over the time origins
-                delta = np.sum(np.array(self.atom_velocity[m + 0]) * np.array(self.atom_velocity[m + nc]))
-                vacf[nc] = vacf[nc] + delta
+        # Convert velocity list to numpy array once (avoid repeated conversions)
+        vel_array = np.array(self.atom_velocity)
 
-        vacf_non = copy.deepcopy(vacf)
-        vacf = vacf / vacf[0]  # normalize the VACF
-        vacf_output = copy.deepcopy(vacf)
+        # Vectorized VACF calculation - much faster than nested loops
+        # Using broadcasting to compute all correlations at once
+        vacf = np.zeros(self.parameters['Nc'])
+
+        for nc in range(self.parameters['Nc']):
+            # Vectorized dot product over all time origins m
+            # Shape: (M+1, num_atoms, 3) dot (M+1, num_atoms, 3) -> (M+1,)
+            correlations = np.sum(vel_array[0:M+1] * vel_array[nc:M+1+nc], axis=(1, 2))
+            vacf[nc] = np.sum(correlations)
+
+        # Store unnormalized version (avoid deep copy)
+        vacf_non = vacf.copy()
+
+        # Normalize the VACF
+        vacf = vacf / vacf[0]
+        vacf_output = vacf.copy()
+
         ff_cal = MathFunctions()
-        pdos = ff_cal.compute_fourier_transform(vacf, self.parameters['Nc'] , omega, self.parameters['dt'])  # copy the VACF before modifying it
+        pdos = ff_cal.compute_fourier_transform(vacf, self.parameters['Nc'], omega, self.parameters['dt'])
 
         return vacf_non, vacf_output, pdos
 
@@ -78,16 +93,24 @@ class ComputeDynamicProperties:
     def calculate_intermediate_scattering(self):
         q = self.compute_q_vectors()
         M = self.parameters['num_frame'] - self.parameters['Nc']
-        fd = np.zeros((self.parameters['vectors'],self.parameters['Nc']))
+        fd = np.zeros((self.parameters['vectors'], self.parameters['Nc']))
+
+        # Vectorized computation - eliminates inner two nested loops
         for kk in range(self.parameters['vectors']):
-            c = np.sum(np.cos(np.sum(q[kk] * self.atom_positions, axis=2)), axis=1)
-            s = np.sum(np.sin(np.sum(q[kk] * self.atom_positions, axis=2)), axis=1)
+            # Compute cos and sin for all frames at once
+            q_dot_r = np.sum(q[kk] * self.atom_positions, axis=2)
+            c = np.sum(np.cos(q_dot_r), axis=1)
+            s = np.sum(np.sin(q_dot_r), axis=1)
+
+            # Vectorized correlation calculation over all nc and m
+            # Instead of nested loops, use array slicing and broadcasting
             for nc in range(self.parameters['Nc']):
-                for m in range(M+1):
-                    delta = (c[m + 0] * c[m + nc] + s[m + 0] * s[m + nc])
-                    fd[kk,nc] = fd[kk,nc] + delta
+                # Compute all m values at once using vectorized operations
+                # c[0:M+1] and c[nc:M+1+nc] are arrays of shape (M+1,)
+                fd[kk, nc] = np.sum(c[0:M+1] * c[nc:M+1+nc] + s[0:M+1] * s[nc:M+1+nc])
+
         num_atoms = np.shape(self.atom_positions)
-        fd_scale = fd/((M+1)*num_atoms[1])
+        fd_scale = fd / ((M + 1) * num_atoms[1])
         return fd_scale
 
     def calculate_dynamic_structure(self, omega, fd_scale):
