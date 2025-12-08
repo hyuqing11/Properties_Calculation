@@ -7,6 +7,12 @@ from WriteFile import WriteFile
 import sys
 from ReadProperties import ReadProperties
 from IntegrationDynamicStructure import IntegrationDynamicStructure
+from multiprocessing import Pool, cpu_count
+from ParallelHelpers import (
+    compute_pdos_parallel,
+    compute_dynamic_structure_parallel,
+    compute_van_hove_parallel
+)
 
 class Simulator:
     def __init__(self, parameters, pos, vel, latt, atom_pos_dict, atom_vel_dict, latt_matrix):
@@ -17,6 +23,28 @@ class Simulator:
         self.atom_pos_dict = atom_pos_dict
         self.atom_vel_dict = atom_vel_dict
         self.latt_matrix = latt_matrix
+
+    def _get_num_processes(self):
+        """
+        Determine the number of processes to use for parallel computation.
+
+        Checks for 'num_processes' in parameters. If not set or set to -1,
+        uses all available CPUs. If set to 1, disables parallelization.
+
+        Returns:
+            Number of processes to use, or None to disable parallelization.
+        """
+        num_proc = self.parameters.get('num_processes', -1)
+
+        if num_proc == 1:
+            return None  # Disable parallelization
+
+        if num_proc == -1:
+            # Use all available CPUs
+            return cpu_count()
+
+        # Use specified number, but cap at available CPUs
+        return min(num_proc, cpu_count())
 
 
     def simulator_choice(self, folder):
@@ -50,18 +78,46 @@ class Simulator:
     def _compute_van_hove(self,folder):
         """Compute the van Hove self-correlation function and write results."""
         print("Compute van Hove self-correlation")
+
+        # Validate atom types
         for j in self.parameters['compute_type']:
             if j > self.parameters['num_types'] + 1:
-                print(f"Error: Unknow atom type.")
+                print(f"Error: Unknown atom type.")
                 sys.exit(1)
-            if j == self.parameters['num_types'] + 1:
-                van_hov_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,
-                                                       self.latt)
-            else:
-                van_hov_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
-                                                       self.latt)
-            Gr_mean, shells, r = van_hov_cal.calculate_van_hove_function()
-            self._write_van_hove_results(folder, j, Gr_mean, r)
+
+        num_processes = self._get_num_processes()
+
+        if num_processes is not None and len(self.parameters['compute_type']) > 1:
+            # Parallel computation
+            print(f'Using {num_processes} processes for parallel Van Hove computation')
+
+            # Prepare arguments for each atom type
+            args_list = [
+                (j, self.atom_pos_dict, self.atom_vel_dict, self.pos, self.vel,
+                 self.parameters, self.latt)
+                for j in self.parameters['compute_type']
+            ]
+
+            # Compute in parallel
+            with Pool(processes=num_processes) as pool:
+                results = pool.map(compute_van_hove_parallel, args_list)
+
+            # Write results
+            for j, Gr_mean, shells, r in results:
+                self._write_van_hove_results(folder, j, Gr_mean, r)
+
+        else:
+            # Sequential computation (original code path)
+            print('Using sequential computation')
+            for j in self.parameters['compute_type']:
+                if j == self.parameters['num_types'] + 1:
+                    van_hov_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,
+                                                           self.latt)
+                else:
+                    van_hov_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
+                                                           self.latt)
+                Gr_mean, shells, r = van_hov_cal.calculate_van_hove_function()
+                self._write_van_hove_results(folder, j, Gr_mean, r)
 
     def _compute_vacf_and_pdos(self,folder):
         """Compute the Velocity Auto-Correlation Function (VACF) and Phonon Density of States (PDOS)."""
@@ -71,15 +127,39 @@ class Simulator:
         dt = self.parameters['dt']
         t = np.arange(self.parameters['Nc']) * dt
 
-        for j in self.parameters['compute_type']:
-            if j == self.parameters['num_types'] + 1:
-                pdos_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters, self.latt)
-                vacf_non, vacf_output, pdos = pdos_cal.pdos(omega)
-            else:
-                pdos_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
-                                                    self.latt)
-                vacf_non, vacf_output, pdos = pdos_cal.pdos(omega)
-            self._write_vacf_and_pdos(j, nu, pdos, t, vacf_non, vacf_output,folder)
+        num_processes = self._get_num_processes()
+
+        if num_processes is not None and len(self.parameters['compute_type']) > 1:
+            # Parallel computation
+            print(f'Using {num_processes} processes for parallel PDOS computation')
+
+            # Prepare arguments for each atom type
+            args_list = [
+                (j, self.atom_pos_dict, self.atom_vel_dict, self.pos, self.vel,
+                 self.parameters, self.latt, omega)
+                for j in self.parameters['compute_type']
+            ]
+
+            # Compute in parallel
+            with Pool(processes=num_processes) as pool:
+                results = pool.map(compute_pdos_parallel, args_list)
+
+            # Write results
+            for j, vacf_non, vacf_output, pdos in results:
+                self._write_vacf_and_pdos(j, nu, pdos, t, vacf_non, vacf_output, folder)
+
+        else:
+            # Sequential computation (original code path)
+            print('Using sequential computation')
+            for j in self.parameters['compute_type']:
+                if j == self.parameters['num_types'] + 1:
+                    pdos_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters, self.latt)
+                    vacf_non, vacf_output, pdos = pdos_cal.pdos(omega)
+                else:
+                    pdos_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,
+                                                        self.latt)
+                    vacf_non, vacf_output, pdos = pdos_cal.pdos(omega)
+                self._write_vacf_and_pdos(j, nu, pdos, t, vacf_non, vacf_output, folder)
 
     def _compute_dynamic_structure(self,folder):
         print("Compute dynamics structure")
@@ -88,25 +168,58 @@ class Simulator:
         nu = omega / (2 * np.pi)
         dt = self.parameters['dt']
         t = np.arange(self.parameters['Nc']) * dt
+
+        # Validate atom types
         for j in self.parameters['compute_type']:
             if j > self.parameters['num_types'] + 1:
-                print(f"Error: Unknow atom type.")
+                print(f"Error: Unknown atom type.")
                 sys.exit(1)
-            if j == self.parameters['num_types'] + 1:
-                dynamic_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,
-                                                       self.latt)
-            else:
-                dynamic_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,self.latt)
-            fd_scale = dynamic_cal.calculate_intermediate_scattering()
-            if wr1:
-                self._write_intermediate_scattering(folder, j, t, fd_scale)
 
-            Sv = dynamic_cal.calculate_dynamic_structure(omega, fd_scale)
-            if wr2:
-                self._write_dynamic_structure(folder, j, nu, Sv)
-            S_intgr = dynamic_cal.Integrate_dynamic_structure(Sv)
-            if wr3:
-                self._write_integration_dynamic_structure(folder, j, nu, S_intgr)
+        num_processes = self._get_num_processes()
+
+        if num_processes is not None and len(self.parameters['compute_type']) > 1:
+            # Parallel computation
+            print(f'Using {num_processes} processes for parallel dynamic structure computation')
+
+            # Prepare arguments for each atom type
+            args_list = [
+                (j, self.atom_pos_dict, self.atom_vel_dict, self.pos, self.vel,
+                 self.parameters, self.latt, omega)
+                for j in self.parameters['compute_type']
+            ]
+
+            # Compute in parallel
+            with Pool(processes=num_processes) as pool:
+                results = pool.map(compute_dynamic_structure_parallel, args_list)
+
+            # Write results
+            for j, fd_scale, Sv, S_intgr in results:
+                if wr1:
+                    self._write_intermediate_scattering(folder, j, t, fd_scale)
+                if wr2:
+                    self._write_dynamic_structure(folder, j, nu, Sv)
+                if wr3:
+                    self._write_integration_dynamic_structure(folder, j, nu, S_intgr)
+
+        else:
+            # Sequential computation (original code path)
+            print('Using sequential computation')
+            for j in self.parameters['compute_type']:
+                if j == self.parameters['num_types'] + 1:
+                    dynamic_cal = ComputeDynamicProperties(self.pos, self.vel, self.parameters,
+                                                           self.latt)
+                else:
+                    dynamic_cal = ComputeDynamicProperties(self.atom_pos_dict[j], self.atom_vel_dict[j], self.parameters,self.latt)
+                fd_scale = dynamic_cal.calculate_intermediate_scattering()
+                if wr1:
+                    self._write_intermediate_scattering(folder, j, t, fd_scale)
+
+                Sv = dynamic_cal.calculate_dynamic_structure(omega, fd_scale)
+                if wr2:
+                    self._write_dynamic_structure(folder, j, nu, Sv)
+                S_intgr = dynamic_cal.Integrate_dynamic_structure(Sv)
+                if wr3:
+                    self._write_integration_dynamic_structure(folder, j, nu, S_intgr)
 
     def _write_van_hove_results(self, folder: str, atom_type: int, Gr_mean: np.ndarray, r: np.ndarray):
         sz_time = np.size(self.parameters['time_series'])
