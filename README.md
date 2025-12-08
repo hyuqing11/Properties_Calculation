@@ -77,8 +77,128 @@ This option calculates the Velocity AutoCorrelation Function (VACF) and the Phon
 ### Required Files:
 - `conf.dump_all`: Includes atom positions and velocities
 
-## 4. Imtermeidate Scattering Function (property_type=2)
-This option calculates the imtermediate scattering function and dynamics structure factors for materials
+## 4. Intermediate Scattering Function and Dynamic Structure Factor (property_type=2)
+
+This option calculates the **intermediate scattering function** F(q,t), the **dynamic structure factor** S(q,ω), and their **momentum-integrated** forms. These quantities characterize the dynamics of density fluctuations in materials and are directly comparable to neutron/X-ray scattering experiments.
+
+### Physical Quantities:
+
+- **Intermediate Scattering Function F(q,t):**
+  Describes the time evolution of density fluctuations at wavevector q:
+  $$F(\vec{q},t) = \frac{1}{N} \left\langle \sum_{i=1}^{N} \sum_{j=1}^{N} e^{i\vec{q} \cdot [\vec{r}_i(0) - \vec{r}_j(t)]} \right\rangle$$
+
+  The real part is computed as:
+  $$F(\vec{q},t) = \frac{1}{N} \left\langle \left[\sum_{i} \cos(\vec{q} \cdot \vec{r}_i(0))\right] \times \left[\sum_{j} \cos(\vec{q} \cdot \vec{r}_j(t))\right] + \left[\sum_{i} \sin(\vec{q} \cdot \vec{r}_i(0))\right] \times \left[\sum_{j} \sin(\vec{q} \cdot \vec{r}_j(t))\right] \right\rangle$$
+
+- **Dynamic Structure Factor S(q,ω):**
+  The Fourier transform of F(q,t) with respect to time:
+  $$S(\vec{q},\omega) = \frac{1}{2\pi} \int_{-\infty}^{\infty} F(\vec{q},t) e^{-i\omega t} dt$$
+
+  This reveals the frequency spectrum of density fluctuations at each wavevector.
+
+- **Integrated Dynamic Structure Factor:**
+  Momentum-integrated S(q,ω) over specified q-ranges:
+  $$S_{int}(\omega, [q_{min}, q_{max}]) = \sum_{q \in [q_{min},q_{max}]} S(q,\omega)$$
+
+  Useful for comparison with angle-integrated scattering experiments.
+
+### Input Data Required (input.json):
+
+**Basic parameters:**
+- `num_atoms`: Total number of atoms in the system
+- `num_frame`: Total number of time steps
+- `num_types`: Number of atom types in the system
+- `dim`: Dimension (typically 3)
+- `dt`: Time step (in ps)
+- `Nc`: Number of correlation steps to compute F(q,t)
+- `compute_type`: Array specifying which atom types to compute (e.g., `[1, 2]`)
+
+**Q-vector parameters:**
+- `vectors`: Number of q-vectors to compute (e.g., `50`)
+- `q_dir`: Direction of q-vectors in reciprocal space (e.g., `[1, 0, 0]` for x-direction)
+- `uCell`: Unit cell dimensions (e.g., `[4, 4, 4]`)
+
+**Frequency parameters:**
+- `max_omega`: Maximum angular frequency ω (in rad/ps)
+- `d_omega`: Frequency step Δω (in rad/ps)
+
+**Output control:**
+- `write_parameters`: Array `[wr1, wr2, wr3]` controlling which outputs to write:
+  - `wr1`: Write intermediate scattering function F(q,t) (True/False)
+  - `wr2`: Write dynamic structure factor S(q,ω) (True/False)
+  - `wr3`: Write integrated dynamic structure factor (True/False)
+
+**Integration ranges (optional):**
+- `integration_list`: List of q-ranges for integration (e.g., `[[0.5, 2.0], [2.0, 5.0]]`)
+
+### Example Input (input.json):
+
+```json
+{
+  "property_type": 2,
+  "num_atoms": 10000,
+  "num_frame": 2000,
+  "num_types": 2,
+  "dim": 3,
+  "dt": 0.001,
+  "Nc": 1000,
+  "compute_type": [1, 2],
+  "vectors": 50,
+  "q_dir": [1, 0, 0],
+  "uCell": [4, 4, 4],
+  "max_omega": 30,
+  "d_omega": 0.1,
+  "write_parameters": [true, true, true],
+  "integration_list": [[1.0, 3.0], [3.0, 6.0]],
+  "num_processes": -1
+}
+```
+
+### Output Files:
+
+1. **Intermediate Scattering Function** (if `wr1` is true):
+   - Files: `Intermediate_scattering_{atom_type}_{q_vector_index}.txt`
+   - Format: Two columns `[time, F(q,t)]`
+   - One file per atom type and q-vector
+
+2. **Dynamic Structure Factor** (if `wr2` is true):
+   - Files: `dynamic_structure_{atom_type}_{q_vector_index}.txt`
+   - Format: Two columns `[frequency, S(q,ω)]`
+   - One file per atom type and q-vector
+
+3. **Integrated Dynamic Structure Factor** (if `wr3` is true):
+   - Files: `Integration_dynamic_structure_{atom_type}_{integration_range_index}.txt`
+   - Format: Two columns `[frequency, S_integrated(ω)]`
+   - One file per atom type and integration range
+
+### Physical Interpretation:
+
+**F(q,t) decay:**
+- Fast decay → rapid structural relaxation
+- Slow decay → slow dynamics (e.g., glasses, supercooled liquids)
+- Exponential decay → single relaxation time
+- Stretched exponential → distribution of relaxation times
+
+**S(q,ω) features:**
+- **Sharp peak**: Well-defined phonon or collective excitation
+- **Broad peak**: Strongly damped excitations
+- **Peak position**: Characteristic frequency of density fluctuations
+- **Integrated intensity**: Total scattering strength (sum rule: ∫S(q,ω)dω = N)
+
+**Applications:**
+- Phonon dispersion relations
+- Sound velocities (from low-q limit of S(q,ω))
+- Diffusive dynamics (from low-ω behavior)
+- Comparison with inelastic neutron/X-ray scattering
+
+### Required Files:
+- `conf.dump_all`: Includes atom positions and velocities
+
+### Notes:
+- The implementation uses time-averaging over multiple time origins for better statistics
+- A Hann window function is applied before Fourier transform to reduce spectral leakage
+- The code exploits the symmetry F(q,t) = F(q,-t) for efficiency
+- For detailed equation verification, see `EQUATIONS_VERIFICATION.md`
 
 ## 5. Other Properties (Work in Progress)
 Additional material properties are currently under development and will be added to the repository soon.
